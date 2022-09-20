@@ -26,22 +26,30 @@ void setup()
     //        Serial.println(" Init CAN BUS Shield again");
     delay(100);
   }
-  readPID();
-  readReplyBlocking('\n');
-  delay(1000);
+  Serial.println("Set PID");
+  setPID();
+  delay(5);
+
+  // readPID();
+  readReplyBlocking(',');
+  Serial.println("Set PID done");
+  delay(10000);
 }
 
 void loop()
 {
-  readMotorStatus1();
-  readReplyBlocking('\n');
-  readMotorStatus2();
-  readReplyBlocking('\n');
-  readMotorStatus3();
-  readReplyBlocking('\n');
-  readPID();
-  readReplyBlocking('\n');
-  delay(5000);
+  setPID();
+  readReplyBlocking(',');
+  delay(1000);
+  // readMotorStatus1();
+  // readReplyBlocking(',');
+  // readMotorStatus2();
+  // readReplyBlocking(',');
+  // readMotorStatus3();
+  // readReplyBlocking(',');
+  // readPID();
+  // readReplyBlocking(',');
+  // delay(5000);
   // delay(1000);
   // motor1.print_data();
 }
@@ -70,6 +78,21 @@ void readPID()
   CAN.sendMsgBuf(motor1.getID(), 0, 8, buf);
 }
 
+void setPID()
+{
+  // motor1.set_buf_for_read_cmd(buf, 8, READ_PID);
+  buf[0] = '0x31';
+  buf[1] = '0x00';
+  buf[2] = '0x00';
+  buf[3] = '0x00';
+  buf[4] = '0x00';
+  buf[5] = '0x00';
+  buf[6] = '0x00';
+  buf[7] = '0x00';
+
+  CAN.sendMsgBuf(motor1.getID(), 0, 8, buf);
+}
+
 void readReplyBlocking(char delim)
 {
   while (CAN_MSGAVAIL != CAN.checkReceive()) // check if data coming
@@ -80,6 +103,6 @@ void readReplyBlocking(char delim)
     CAN.readMsgBuf(&len, buf); // read data,  len: data length, buf: data buf
     unsigned long canId = CAN.getCanId();
     motor1.parse_reply(buf, len);
-    motor1.print_data(delim);
+    // motor1.print_data(delim);
   }
 }

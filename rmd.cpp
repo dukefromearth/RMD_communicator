@@ -1,9 +1,10 @@
 #include "rmd.h"
 
-RMD::RMD(int8_t frame_size = 8, uint16_t motor_id = 0x141)
+RMD::RMD(int8_t frame_size, uint16_t motor_id, uint8_t reduction_ratio)
 {
     _frame_size = frame_size;
     _motor_id = motor_id;
+    _reduction_ratio = reduction_ratio;
 }
 
 void RMD::set_buf_for_read_cmd(uint8_t *buffer, uint8_t len, uint8_t cmd)
@@ -21,47 +22,47 @@ void RMD::set_buf_for_read_cmd(uint8_t *buffer, uint8_t len, uint8_t cmd)
 
 void RMD::print_data(char delim)
 {
-    Serial.print("Temperature: ");
-    Serial.print(_motor_temperature);
-    Serial.print(delim);
-    Serial.print("Voltage: ");
-    Serial.print(_voltage);
-    Serial.print(delim);
-    Serial.print("Current: ");
-    Serial.print(_motor_torque_current_amps);
-    Serial.print(delim);
-    Serial.print("Speed: ");
-    Serial.print(_motor_speed);
-    Serial.print(delim);
-    Serial.print("Encoder: ");
-    Serial.print(_encoder_position);
-    Serial.print(delim);
-    Serial.print("Phase a current: ");
-    Serial.print(_phase_a_current);
-    Serial.print(delim);
-    Serial.print("Phase b current: ");
-    Serial.print(_phase_b_current);
-    Serial.print(delim);
-    Serial.print("Phase c current: ");
-    Serial.print(_phase_c_current);
-    Serial.print(delim);
+    // Serial.print("Temperature: ");
+    // Serial.print(_motor_temperature);
+    // Serial.print(delim);
+    // Serial.print("Voltage: ");
+    // Serial.print(_voltage);
+    // Serial.print(delim);
+    // Serial.print("Current: ");
+    // Serial.print(_motor_torque_current_amps);
+    // Serial.print(delim);
+    // Serial.print("Speed: ");
+    // Serial.print(_motor_speed);
+    // Serial.print(delim);
+    // Serial.print("Encoder: ");
+    // Serial.print(_encoder_position);
+    // Serial.print(delim);
+    // Serial.print("Phase a current: ");
+    // Serial.print(_phase_a_current);
+    // Serial.print(delim);
+    // Serial.print("Phase b current: ");
+    // Serial.print(_phase_b_current);
+    // Serial.print(delim);
+    // Serial.print("Phase c current: ");
+    // Serial.print(_phase_c_current);
+    // Serial.print(delim);
     Serial.print("Current loop KP: ");
-    Serial.print(_current_loop_kp);
+    Serial.print(_current_loop_kp, 5);
     Serial.print(delim);
     Serial.print("Current loop KI: ");
-    Serial.print(_current_loop_ki);
+    Serial.print(_current_loop_ki, 5);
     Serial.print(delim);
     Serial.print("Speed loop KP: ");
-    Serial.print(_speed_loop_kp);
+    Serial.print(_speed_loop_kp, 5);
     Serial.print(delim);
     Serial.print("Speed loop KI: ");
-    Serial.print(_speed_loop_ki);
+    Serial.print(_speed_loop_ki, 5);
     Serial.print(delim);
     Serial.print("Position loop KP: ");
-    Serial.print(_position_loop_kp);
+    Serial.print(_position_loop_kp, 5);
     Serial.print(delim);
     Serial.print("Position loop KI: ");
-    Serial.print(_position_loop_ki);
+    Serial.print(_position_loop_ki, 5);
     Serial.print(delim);
     Serial.print("Error: ");
     Serial.println(_error_state);
@@ -80,6 +81,7 @@ void RMD::parse_reply(uint8_t *arr, int8_t len)
         _read_pid(arr);
         break;
     case WRITE_PID_TO_RAM:
+        _write_pid_to_rom_reply(arr);
         break;
     case WRITE_PID_TO_ROM:
         break;
@@ -170,12 +172,29 @@ void RMD::_read_motor_status_3(uint8_t *arr)
 
 void RMD::_read_pid(uint8_t *arr)
 {
-    _current_loop_kp = (float)arr[2];
-    _current_loop_ki = (float)arr[3];
-    _speed_loop_kp = (float)arr[4];
-    _speed_loop_ki = (float)arr[5];
-    _position_loop_kp = (float)arr[6];
-    _position_loop_ki = (float)arr[7];
+    _current_loop_kp = (double)arr[2];
+    _current_loop_ki = (double)arr[3];
+    _speed_loop_kp = (double)arr[4];
+    _speed_loop_ki = (double)arr[5];
+    _position_loop_kp = (double)arr[6];
+    _position_loop_ki = (double)arr[7];
+    return;
+}
+
+void RMD::_write_pid_to_rom_reply(uint8_t *arr)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        Serial.print(arr[i], HEX);
+        Serial.print('\t');
+    }
+    Serial.println();
+    _current_loop_kp = (double)arr[2];
+    _current_loop_ki = (double)arr[3];
+    _speed_loop_kp = (double)arr[4];
+    _speed_loop_ki = (double)arr[5];
+    _position_loop_kp = (double)arr[6];
+    _position_loop_ki = (double)arr[7];
     return;
 }
 
