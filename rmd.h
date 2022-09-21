@@ -13,6 +13,8 @@ public:
 
     void set_buf_for_read_cmd(uint8_t *buffer, uint8_t len, uint8_t cmd);
 
+    void set_multiturn_position(uint8_t *arr, float _angle, uint16_t _rpm);
+
     int16_t get_frame_count()
     {
         return _frame_count;
@@ -40,6 +42,15 @@ private:
     double _speed_loop_ki = 0.0;
     double _position_loop_kp = 0.0;
     double _position_loop_ki = 0.0;
+    int32_t _motor_multiturn_position = 0;
+    int32_t _shaft_multiturn_position = 0;
+    double _multiturn_angle = 0.0;
+    double _encoder_resolution = 65535.0;
+    int32_t _encoder_offset = 0;
+
+    void _read_multiturn_position(uint8_t *arr);
+
+    void _read_encoder_offset(uint8_t *arr);
 
     bool _does_equal_frame_size(int8_t len);
 
@@ -56,4 +67,6 @@ private:
     uint16_t _combine_two_bytes_uint_16t(uint8_t low, uint8_t high);
 
     int16_t _combine_two_bytes_int_16t(uint8_t low, uint8_t high);
+
+    float _rpm_to_dps(float rpm) { return rpm / 0.166667; }
 };
