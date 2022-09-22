@@ -16,6 +16,11 @@ unsigned char len = 0;
 // variable to send the message
 unsigned char buf[8] = {0};
 
+unsigned long last_time = 0;
+int interval = 1000;
+int32_t last_position = 0;
+int32_t current_position = 0;
+
 void setup()
 {
   Serial.begin(115200);
@@ -24,11 +29,15 @@ void setup()
   {
     //        Serial.println("CAN BUS Shield init fail");
     //        Serial.println(" Init CAN BUS Shield again");
-    delay(100);
+    delay(1000);
   }
   motorStart();
   readReplyBlocking();
-  // delay(3000);
+  delay(3000);
+  readAngle();
+  readReplyBlocking();
+  last_position = motor1.get_position();
+  current_position = motor1.get_position();
   // readEncoderOffset();
   // readReplyBlocking();
 }
@@ -38,16 +47,43 @@ void loop()
   if (Serial.available() > 0)
   {
     int input = Serial.parseInt();
-    setPosition4((float)input);
+    setSpeed(input);
+    readReplyBlocking();
   }
   readAngle();
   readReplyBlocking();
+  readMotorStatus1();
+  readReplyBlocking();
+  readMotorStatus2();
+  readReplyBlocking();
+
+  // if (millis() - last_time > interval)
+  // {
+  //   // Serial.println(motor1.get_position());
+  //   setPosition(motor1.get_position());
+  //   readReplyBlocking();
+  //   last_time = millis();
+  // }
+
+  // readReplyBlocking();
   // readMotorStatus2();
   // readReplyBlocking();
-  motor1.print_data(',');
+  // motor1.print_data(',');
 }
 
-void setPosition4(float input)
+void setSpeed(int32_t speed)
+{
+  motor1.set_speed(buf, speed);
+  CAN.sendMsgBuf(motor1.getID(), 0, 8, buf);
+}
+
+void setPositionAngle(float input)
+{
+  motor1.set_multiturn_position_angle(buf, input, 1000);
+  CAN.sendMsgBuf(motor1.getID(), 0, 8, buf);
+}
+
+void setPosition(int32_t input)
 {
   motor1.set_multiturn_position(buf, input, 1000);
   CAN.sendMsgBuf(motor1.getID(), 0, 8, buf);

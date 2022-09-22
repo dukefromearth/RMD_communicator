@@ -1,4 +1,5 @@
 #include "rmd.h"
+#include "helpers.h"
 
 RMD::RMD(int8_t frame_size, uint16_t motor_id, uint8_t reduction_ratio)
 {
@@ -31,9 +32,9 @@ void RMD::print_data(char delim)
     // Serial.print("Current: ");
     // Serial.print(_motor_torque_current_amps);
     // Serial.print(delim);
-    // Serial.print("Speed: ");
-    // Serial.print(_motor_speed);
-    // Serial.print(delim);
+    Serial.print("Speed: ");
+    Serial.print(_motor_speed);
+    Serial.print(delim);
     Serial.print("Angle: ");
     Serial.print(_multiturn_angle);
     Serial.print(delim);
@@ -97,6 +98,9 @@ void RMD::parse_reply(uint8_t *arr, int8_t len)
         break;
     case READ_MULTITURN_ENCODER_POSITION_OFFSET:
         _read_encoder_offset(arr);
+        break;
+    case SET_MULTITURN_POSITION:
+        _read_motor_status_2(arr);
         break;
     default:
         Serial.print(arr[0], HEX);
@@ -214,7 +218,7 @@ bool RMD::_does_equal_frame_size(int8_t len)
 /// @param arr byte array of length _frame_size;
 /// @param _angle multi-turn angle position in degrees
 /// @param _rpm 0 - 1000;
-void RMD::set_multiturn_position(uint8_t *arr, float _angle, uint16_t _rpm)
+void RMD::set_multiturn_position_angle(uint8_t *arr, float _angle, uint16_t _rpm)
 {
     union
     {
@@ -240,5 +244,61 @@ void RMD::set_multiturn_position(uint8_t *arr, float _angle, uint16_t _rpm)
     arr[5] = angle.bytes[1];
     arr[6] = angle.bytes[2];
     arr[7] = angle.bytes[3];
+    return;
+}
+
+/// @brief The host sends this command to control the position of the motor (multi turn angle).
+/// @param arr byte array of length _frame_size;
+/// @param _target multi-turn encoder position
+/// @param _rpm 0 - 1000;
+void RMD::set_multiturn_position(uint8_t *arr, int32_t _target, uint16_t _rpm)
+{
+    union
+    {
+        int32_t val;
+        int8_t bytes[4];
+    } pos;
+
+    pos.val = _target;
+
+    union
+    {
+        uint16_t val;
+        uint8_t bytes[2];
+    } dps;
+
+    dps.val = _rpm_to_dps(_rpm);
+
+    arr[0] = SET_MULTITURN_POSITION;
+    arr[1] = 0x00;
+    arr[2] = dps.bytes[0];
+    arr[3] = dps.bytes[1];
+    arr[4] = pos.bytes[0];
+    arr[5] = pos.bytes[1];
+    arr[6] = pos.bytes[2];
+    arr[7] = pos.bytes[3];
+    return;
+}
+
+void RMD::set_speed(uint8_t *arr, int32_t _rpm)
+{
+
+    // int32_t dps = _rpm_to_dps(_rpm);
+    // for (int i = 0; i < 4; i++)
+    // {
+    //     Serial.print(uint8_t(_rpm >> (i * 8)), HEX);
+    //     Serial.print('\t');
+    // }
+    // Serial.println();
+    _rpm *= 100 * _reduction_ratio;
+
+    arr[0] = SPEED_CLOSED_LOOP;
+    arr[1] = 0x01;
+    arr[2] = 0x00;
+    arr[3] = 0x00;
+    arr[4] = uint8_t(_rpm >> 0);
+    arr[5] = uint8_t(_rpm >> 8);
+    arr[6] = uint8_t(_rpm >> 16);
+    arr[7] = uint8_t(_rpm >> 24);
     return;
 }

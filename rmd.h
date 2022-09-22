@@ -1,5 +1,6 @@
 #include "rmd_definitions.h"
 #include <Arduino.h>
+// #include "helpers.h"
 
 class RMD
 {
@@ -13,7 +14,15 @@ public:
 
     void set_buf_for_read_cmd(uint8_t *buffer, uint8_t len, uint8_t cmd);
 
-    void set_multiturn_position(uint8_t *arr, float _angle, uint16_t _rpm);
+    void set_multiturn_position_angle(uint8_t *arr, float _angle, uint16_t _rpm);
+
+    void set_multiturn_position(uint8_t *arr, int32_t _target, uint16_t _rpm);
+
+    void set_speed(uint8_t *arr, int32_t _rpm);
+
+    int32_t get_position(void) { return _shaft_multiturn_position; }
+
+    double get_angle(void) { return _multiturn_angle; }
 
     int16_t get_frame_count()
     {
@@ -44,7 +53,7 @@ private:
     double _position_loop_ki = 0.0;
     int32_t _motor_multiturn_position = 0;
     int32_t _shaft_multiturn_position = 0;
-    double _multiturn_angle = 0.0;
+    float _multiturn_angle = 0.0;
     double _encoder_resolution = 65535.0;
     int32_t _encoder_offset = 0;
 
